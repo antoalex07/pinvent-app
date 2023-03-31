@@ -42,7 +42,7 @@ const registerUser = asyncHandler( async (req, res) => {
     const token = generateToken(user._id); 
 
     //send HTTP-only cookie
-    res.cookie("token", "token", {
+    res.cookie("token", token, {
         path: "/",
         httpOnly: true,
         expires: new Date(Date.now() + 100 * 86400),
@@ -83,7 +83,7 @@ const loginUser = asyncHandler(async (req, res) => {
     const token = generateToken(user._id); 
 
     //send HTTP-only cookie
-    res.cookie("token", "token", {
+    res.cookie("token", token, {
         path: "/",
         httpOnly: true,
         expires: new Date(Date.now() + 100 * 86400),
@@ -117,12 +117,77 @@ const getUser = asyncHandler(async (req, res) => {
     if(user){
         const {_id, name, email, photo, phone, bio} = user
         res.status(200).json({
-            _id, name, email, photo, phone, bio, token
+            _id, name, email, photo, phone, bio
         })
     } else {
         res.status(400);
-        throw new Error("Invalid User data");
+        throw new Error("User not found");
     }
+});
+
+const loginStatus = asyncHandler(async (req, res) => {
+    const token = req.cookies.token;
+    if(!token){
+        return res.json(false);
+    }
+    const verified = jwt.verify(token, process.env.JWT_SECRET);
+    if(verified){
+        return res.json(true);
+    }
+    return res.json(false);
+});
+
+const updateUser = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+    if(user){
+        const {name, email, photo, phone, bio} = user;
+        user.email = email;
+        user.name = req.body.name || name;
+        user.photo = req.body.photo || photo;
+        user.phone = req.body.phone || phone;
+        user.bio = req.body.bio || bio;
+        
+        const updatedUser = await user.save();
+        res.status(200).json({
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            photo: updatedUser.photo,
+            phone: updatedUser.phone,
+            bio: updatedUser.bio,
+        });
+    } else{
+        res.status(404);
+        throw new Error("User not found");
+    }
+});
+
+const changePassword = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id);
+    const {oldPassword, password} = req.body;
+    
+    if(!user){
+        res.status(400);
+        throw new Error("User not found, Please sign-up");
+    }
+    
+    if(!oldPassword || !password){
+        res.status(400);
+        throw new Error("Please enter old and new passwords");
+    }
+
+    //check if oldPassword matches with the one in DB
+    const passwordIsCorrect = await bcrypt.compare(oldPassword, user.password);
+
+    if(user && passwordIsCorrect){
+        user.password = password;
+        await user.save();
+        res.status(200).send("Password changed successfully");
+    }
+});
+
+const forgotPassword = asyncHandler(async (req, res) => {
+    res.send("forgot password");
 });
 
 module.exports = {
@@ -130,4 +195,8 @@ module.exports = {
     loginUser,
     logout,
     getUser,
+    loginStatus,
+    updateUser,
+    changePassword,
+    forgotPassword,
 };
