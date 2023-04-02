@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const Token = require("../models/tokenModel");
 const crypto = require("crypto");
+const sendEmail = require("../utils/sendEmail");
 
 const generateToken = (id) => {
     return jwt.sign({id}, process.env.JWT_SECRET, {expiresIn: "1d"});
@@ -193,6 +194,7 @@ const changePassword = asyncHandler(async (req, res) => {
 
 const forgotPassword = asyncHandler(async (req, res) => {
     const {email} = req.body;
+    //res.send(email);
     const user = await User.findOne({email});
 
     if(!user){
@@ -200,14 +202,74 @@ const forgotPassword = asyncHandler(async (req, res) => {
         throw new Error("User not found");
     }
 
+    //delete a token if it already exists in the DB
+    let token = await Token.findOne({userId: user._id})
+    if(token){
+        await token.deleteOne();
+    }
+
     //reset token
     let resetToken = crypto.randomBytes(32).toString("hex") + user._id;
+    console.log(resetToken);
 
     //hash token before saving
     const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
-    console.log(hashedToken);
     
-    res.send("forgot password");
+    await new Token({
+        userId: user._id,
+        token: hashedToken,
+        createdAt: Date.now(),
+        expiresAt: Date.now() + 30 * (60 * 1000),
+    }).save();
+
+    const resetUrl = process.env.FRONTEND_URL + '/resetpassword/' + resetToken;
+
+    const message = '<h1>Hello ' + user.name + '</h1>' +
+                    '<p>Please use the URL below to reset your password</p>' + 
+                    '<p>The reset link is valid only for 30 minutes </p>' + 
+                    '<a href = ' + resetUrl + 'clicktracking=off>' + resetUrl + '</a>' +
+                    '<p>Regards....</p>' + 
+                    '<p>Pinvent Team </p>';
+    const subject = "Password Reset Request";
+    const send_to = user.email;
+    const send_from = process.env.EMAIL_USER;
+
+    try {
+        //if(!subject || !message || !send_to || !send_to)
+        await sendEmail(subject, message, send_to, send_from)
+        res.status(200).json({success: true, message: "Reset email send"})
+    } catch (error) {
+        res.status(500);
+        throw new Error({message: error.message});
+    }
+    
+  //  res.send("forgot password");
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+    const {password} = req.body;
+    const {resetToken} = req.params;
+
+    console.log(resetToken);
+    
+    const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+
+    const userToken = await Token.findOne({
+        token: hashedToken,
+        expiresAt: {$gt: Date.now()}
+    })
+
+    if(!userToken){
+        res.status(404);
+        throw new Error("INvalid or Expired Link");
+    }
+
+    const user = await User.findOne({_id: userToken.userId})
+    user.password = password
+    await user.save()
+    res.status(200).json({
+        message: "Password reset successfull"
+    })
 });
 
 module.exports = {
@@ -219,4 +281,5 @@ module.exports = {
     updateUser,
     changePassword,
     forgotPassword,
+    resetPassword
 };
