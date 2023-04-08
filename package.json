@@ -1,6 +1,23 @@
 {
+  "name": "pinvent-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "backend": "nodemon backend/server.js",
+    "frontend": "npm start --prefix frontend",
+    "both": "concurrently \"npm run backend\" \"npm run frontend\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
     "cloudinary": "^1.35.0",
+    "dotenv": "^16.0.3",
     "node-sass": "^8.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.0.1"
   }
 }

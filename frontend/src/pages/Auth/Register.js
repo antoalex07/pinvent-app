@@ -1,10 +1,57 @@
-import React from 'react'
+import React, { useState } from 'react'
 import styles from "./auth.module.scss";
 import { TiUserAddOutline } from "react-icons/ti";
 import Card from '../../components/card/Card';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import { registerUser, validateEmail } from '../../services/authService';
+
+const initialState = {
+  name: "",
+  email: "",
+  password: "",
+  password2: "",
+}
 
 const Register = () => {
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState(initialState);
+  const {name, email, password, password2} = formData;
+
+  const handleInputChange = (event) => {
+    const {name, value} = event.target;
+    setFormData({...formData, [name]: value});
+  };
+
+  const register = async (event) => {
+    event.preventDefault();
+    
+    if(!email || !name || !password){
+      return toast.error("All fields are required");
+    }
+    if(!validateEmail(email)){
+      return toast.error("Enter a valid email");
+    }
+    if(password.length < 6){
+      return toast.error("Password must be more than 6 characters");
+    }
+    if(password !== password2){
+      return toast.error("Passwords do not match");
+    }
+    const userData = {name, email, password}
+    setIsLoading(true);
+    try {
+      //console.log(userData);
+      const data = await registerUser(userData);
+      console.log(data);
+      setIsLoading(false);
+    } catch (error) {
+      setIsLoading(false);
+      console.log(error.message);
+    }
+  };
+
   return <div className='container'>
     <div className={styles.auth}>
     <Card>
@@ -14,11 +61,31 @@ const Register = () => {
         </div>
         <h2>Register</h2>
 
-        <form>
-          <input type='text' placeholder='Name' required name='name' />
-          <input type='email' placeholder='Email' required name='email' />
-          <input type='password' placeholder='Password' required name='password' />
-          <input type='password' placeholder='Confirm Password' required name='password' />
+        <form onSubmit={register}>
+          <input type='text' 
+            placeholder='Name' 
+            required name='name' 
+            value={name} 
+            onChange={handleInputChange}
+          />
+          <input type='email' 
+            placeholder='Email' 
+            required name='email' 
+            value={email} 
+            onChange={handleInputChange}
+          />
+          <input type='password' 
+            placeholder='Password' 
+            required name='password' 
+            value={password} 
+            onChange={handleInputChange}
+          />
+          <input type='password' 
+            placeholder='Confirm Password' 
+            required name='password2' 
+            value={password2} 
+            onChange={handleInputChange}
+          />
           <button type='submit' className='--btn --btn-primary --btn-block'>Register</button>
         </form>
 
