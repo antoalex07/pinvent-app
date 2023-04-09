@@ -2,9 +2,59 @@ import React from 'react'
 import styles from "./auth.module.scss";
 import { BiLogIn } from "react-icons/bi";
 import Card from '../../components/card/Card';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { toast } from 'react-toastify';
+import { loginUser, validateEmail } from '../../services/authService';
+import { SET_LOGIN, SET_NAME } from "../../redux/features/auth/authSlice";
+
+const initialState = {
+  email: "",
+  password: "",
+}
 
 const Login = () => {
+
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState(initialState);
+  const {email , password} = formData;
+
+  const handleInputChange = (event) => {
+    const {name, value} = event.target();
+    setFormData({...formData, [name]: value});
+  }
+
+  const login = async (event) => {
+    event.preventDefault();
+
+    if(!email || !password){
+      toast.error("All fields are required");
+    }
+
+    if(!validateEmail){
+      toast.error("Please enter a Valid email");
+    }
+
+    const userData = {
+      email,
+      password
+    };
+
+    setIsLoading(true);
+    try {
+      const data = await loginUser(userData);
+      await dispatch(SET_LOGIN(true));
+      await dispatch(SET_NAME(data.name));
+      navigate("/dashboard");
+      setIsLoading(false);
+    } catch (error) {
+      //console.log(error.message);
+      setIsLoading(false);
+    }
+  } 
+
   return <div className='container'>
     <div className={styles.auth}>
     <Card>
@@ -14,9 +64,22 @@ const Login = () => {
         </div>
         <h2>Login</h2>
 
-        <form>
-          <input type='email' placeholder='Email' required name='email' />
-          <input type='password' placeholder='Password' required name='password' />
+        <form onSubmit={login}>
+          
+          <input type='email' 
+          placeholder='Email' 
+          required 
+          name='email'
+          value={email}
+          onChange={handleInputChange} />
+          
+          <input type='password' 
+          placeholder='Password' 
+          required 
+          name='password' 
+          value={password} 
+          onChange={handleInputChange}/>
+          
           <button type='submit' className='--btn --btn-primary --btn-block'>Login</button>
         </form>
 
