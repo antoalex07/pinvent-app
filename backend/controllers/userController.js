@@ -50,6 +50,7 @@ const registerUser = asyncHandler( async (req, res) => {
         httpOnly: true,
         expires: new Date(Date.now() + 100 * 86400),
         sameSite: "none",
+        secure: true,
     });
 
     console.log('Cookie set:', req.cookies);
@@ -91,6 +92,7 @@ const loginUser = asyncHandler(async (req, res) => {
         httpOnly: true,
         expires: new Date(Date.now() + 100 * 86400),
         sameSite: "none",
+        secure: true,
     });
 
     if(user && passwordIsCorrect){
@@ -111,6 +113,7 @@ const logout = asyncHandler(async (req, res) => {
         httpOnly: true,
         expires: new Date(0),
         sameSite: "none",
+        secure: true,
     });
     return res.status(200).json({ message: "Successfully logged out" });
 });
@@ -130,6 +133,7 @@ const getUser = asyncHandler(async (req, res) => {
 
 const loginStatus = asyncHandler(async (req, res) => {
     const token = req.cookies.token;
+   // console.log(token);
     if(!token){
         return res.json(false);
     }

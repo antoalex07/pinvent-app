@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import styles from "./auth.module.scss";
 import { BiLogIn } from "react-icons/bi";
 import Card from '../../components/card/Card';
@@ -7,6 +7,7 @@ import { useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';
 import { loginUser, validateEmail } from '../../services/authService';
 import { SET_LOGIN, SET_NAME } from "../../redux/features/auth/authSlice";
+import Loader from '../../components/loader/Loader';
 
 const initialState = {
   email: "",
@@ -22,7 +23,7 @@ const Login = () => {
   const {email , password} = formData;
 
   const handleInputChange = (event) => {
-    const {name, value} = event.target();
+    const {name, value} = event.target;
     setFormData({...formData, [name]: value});
   }
 
@@ -57,6 +58,7 @@ const Login = () => {
 
   return <div className='container'>
     <div className={styles.auth}>
+      {isLoading && <Loader /> }
     <Card>
       <div className={styles.form}>
         <div className="--flex-center">

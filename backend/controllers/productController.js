@@ -5,7 +5,7 @@ const cloudinary = require("cloudinary").v2;
 
 const createProduct = asyncHandler(async (req, res) => {
     const {name, sku, category, quantity, price, description} = req.body;
-
+   // console.log("formdata reached here");
     //Validation
     if(!name || !category || !price || !description || !quantity){
         res.status(400);
@@ -20,7 +20,7 @@ const createProduct = asyncHandler(async (req, res) => {
             uploadedFile = await cloudinary.uploader.upload((req.file.path), {folder: "Pinvent App", resource_type: "image"})
         } catch (error) {
             res.status(500);
-            //console.log(error.message);
+            console.log(error.message);
             throw new Error({message: error.message});
         }
 
