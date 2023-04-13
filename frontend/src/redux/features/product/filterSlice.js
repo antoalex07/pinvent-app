@@ -1,15 +1,23 @@
 import { createSlice } from '@reduxjs/toolkit'
 
 const initialState = {
-
+    filteredProducts: []
 }
 
 const filterSlice = createSlice({
-  name: second,
+  name: "filter",
   initialState,
-  reducers: {}
+  reducers: {
+    FILTER_PRODUCTS(state, action){
+        const {products, search} = action.payload;
+        const tempProducts = products.filter((product) => product.name.toLowerCase().includes(search.toLowerCase()) || product.category.toLowerCase().includes(search.toLowerCase()))
+        state.filteredProducts = tempProducts;
+    }
+  }
 });
 
-export const {} = filterSlice.actions
+export const {FILTER_PRODUCTS} = filterSlice.actions
+
+export const selectFilteredProducts = (state) => state.filter.filteredProducts;
 
 export default filterSlice.reducer

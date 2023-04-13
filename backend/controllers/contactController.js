@@ -23,7 +23,7 @@ const contactUs = asyncHandler(async (req, res) => {
 
     try {
         await sendEmail(subject, message, send_to, send_from)
-        res.status(200).json({success: true, message: "Reset email send"})
+        res.status(200).json({success: true, message: "Email send"})
     } catch (error) {
         res.status(500);
         throw new Error("email not sent please try again");
